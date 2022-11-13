@@ -3,5 +3,14 @@
 version = 3
 
 [[package]]
+name = "bpaf"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1eefd44fa3be02b360bb22b44abaf204fb381baf5d2f24e270f58bb42dc3e73"
+
+[[package]]
 name = "todo"
 version = "0.1.0"
+dependencies = [
+ "bpaf",
+]

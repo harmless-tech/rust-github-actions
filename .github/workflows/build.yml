@@ -66,7 +66,7 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Download Deps
-        run: cargo fetch
+        run: cargo fetch --verbose
       - name: Bundle Deps
         run: |
           mkdir .cargo-store
