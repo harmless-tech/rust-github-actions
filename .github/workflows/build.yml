@@ -77,17 +77,17 @@ jobs:
         run: cargo fetch --verbose
       - name: Bundle Deps
         run: |
-          mkdir .cargo-store
-          mkdir .cargo-store/registry
-          mkdir .cargo-store/git
-          cp -r ~/.cargo/registry/index ./.cargo-store/registry/index
-          cp -r ~/.cargo/registry/cache ./.cargo-store/registry/cache
-          cp -r ~/.cargo/git/db ./.cargo-store/git/db
+          mkdir -p .cargo-store/.cargo-store/registry
+          mkdir -p .cargo-store/.cargo-store/git
+          cp -r ~/.cargo/registry/index ./.cargo-store/.cargo-store/registry/index
+          cp -r ~/.cargo/registry/cache ./.cargo-store/.cargo-store/registry/cache
+          cp -r ~/.cargo/git/db ./.cargo-store/.cargo-store/git/db
       - name: Store Crate Deps
         uses: actions/upload-artifact@v3
         with:
           name: crate-deps
           path: .cargo-store
+          retention-days: 1
 
   x86_64-unknown-linux-gnu:
     runs-on: ubuntu-latest
