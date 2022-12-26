@@ -273,7 +273,7 @@ jobs:
           path: |
             target/release/${{ env.bin-name }}.exe
       - name: Zip
-        uses: vimtor/action-zip@v1
+        uses: vimtor/action-zip@v1.1
         with:
           files: ./target/release/${{ env.bin-name }}.exe
           dest: x86_64-pc-windows-msvc.zip
@@ -316,7 +316,7 @@ jobs:
           path: |
             target/i686-pc-windows-msvc/release/${{ env.bin-name }}.exe
       - name: Zip
-        uses: vimtor/action-zip@v1
+        uses: vimtor/action-zip@v1.1
         with:
           files: ./target/i686-pc-windows-msvc/release/${{ env.bin-name }}.exe
           dest: i686-pc-windows-msvc.zip
