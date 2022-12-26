@@ -117,7 +117,7 @@ jobs:
             target/debug/${{ env.bin-name }}
 
   x86_64-apple-darwin:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [ deps ]
     steps:
       - uses: actions/checkout@v3
@@ -149,7 +149,7 @@ jobs:
             target/debug/${{ env.bin-name }}
 
   aarch64-apple-darwin:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [ deps ]
     steps:
       - uses: actions/checkout@v3

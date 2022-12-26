@@ -168,7 +168,7 @@ jobs:
           asset_paths: '["x86_64-unknown-linux-gnu.tar.gz"]'
 
   x86_64-apple-darwin:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
@@ -214,7 +214,7 @@ jobs:
           asset_paths: '["x86_64-apple-darwin.tar.gz"]'
 
   aarch64-apple-darwin:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
@@ -236,10 +236,6 @@ jobs:
         run: rustc --version
       - name: Add Rust target
         run: rustup target add aarch64-apple-darwin
-      - name: MacOS SDK
-        run: |
-          export SDKROOT=$(xcrun -sdk macosx --show-sdk-path)
-          export MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)
       - name: Build
         run: cargo build --verbose --workspace --target aarch64-apple-darwin --release
       - name: Artifact
