@@ -171,10 +171,6 @@ jobs:
         run: rustc --version
       - name: Add Rust target
         run: rustup target add aarch64-apple-darwin
-      - name: MacOS SDK
-        run: |
-          export SDKROOT=$(xcrun -sdk macosx --show-sdk-path)
-          export MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version)
       - name: Build
         run: cargo build --verbose --workspace --target aarch64-apple-darwin
       - name: Artifact
@@ -298,7 +294,7 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
-      - uses: taiki-e/install-action@v1
+      - uses: taiki-e/install-action@v2
         with:
           tool: cross
       - name: Build

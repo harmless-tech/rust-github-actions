@@ -87,7 +87,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-ecosystem/action-regex-match@v2
+      - uses: KyoriPowered/action-regex-match@v3
         id: regex-tag
         with:
           text: ${{ github.ref }}
@@ -152,14 +152,16 @@ jobs:
           name: x86_64-unknown-linux-gnu
           path: |
             target/release/${{ env.bin-name }}
+#      - name: Tar
+#        uses: a7ul/tar-action@v1.1.2
+#        with:
+#          command: c
+#          cwd: ./target/release
+#          files: |
+#            ${{ env.bin-name }}
+#          outPath: x86_64-unknown-linux-gnu.tar.gz
       - name: Tar
-        uses: a7ul/tar-action@v1.1.2
-        with:
-          command: c
-          cwd: ./target/release
-          files: |
-            ${{ env.bin-name }}
-          outPath: x86_64-unknown-linux-gnu.tar.gz
+        run: tar czvf x86_64-unknown-linux-gnu.tar.gz -C ./target/release ${{ env.bin-name }}
       - name: Upload to release
         uses: alexellis/upload-assets@0.4.0
         env:
@@ -291,7 +293,7 @@ jobs:
           path: |
             target/release/${{ env.bin-name }}.exe
       - name: Zip
-        uses: papeloto/action-zip@v1
+        uses: vimtor/action-zip@v1
         with:
           files: ./target/release/${{ env.bin-name }}.exe
           dest: x86_64-pc-windows-msvc.zip
@@ -334,7 +336,7 @@ jobs:
           path: |
             target/i686-pc-windows-msvc/release/${{ env.bin-name }}.exe
       - name: Zip
-        uses: papeloto/action-zip@v1
+        uses: vimtor/action-zip@v1
         with:
           files: ./target/i686-pc-windows-msvc/release/${{ env.bin-name }}.exe
           dest: i686-pc-windows-msvc.zip
@@ -395,7 +397,7 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
-      - uses: taiki-e/install-action@v1
+      - uses: taiki-e/install-action@v2
         with:
           tool: cross
       - name: Build
