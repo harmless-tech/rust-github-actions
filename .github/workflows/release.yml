@@ -117,7 +117,7 @@ jobs:
 # TODO: Publish
 #      - name: Publish
 #        run: |
-#          cargo publish --token ${CRATES_TOKEN} # -p CRATE
+#          cargo publish --verbose --token ${CRATES_TOKEN} # -p CRATE
 #        env:
 #          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
 
@@ -305,6 +305,8 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
+      - name: Add Rust target
+        run: rustup target add i686-pc-windows-msvc
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --release --target i686-pc-windows-msvc
       - name: Build
@@ -312,7 +314,7 @@ jobs:
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: x86_64-pc-windows-msvc
+          name: i686-pc-windows-msvc
           path: |
             target/i686-pc-windows-msvc/release/${{ env.bin-name }}.exe
       - name: Zip
