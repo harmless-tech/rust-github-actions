@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "bpaf"
-version = "0.7.7"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e95b1464dea6edc21be413bf260662aef39490e150455ae3760019738600b4f"
+checksum = "31f4c9de9c67618395106c81fb9461290a8910af29aa0188daec29001a1181ae"
 
 [[package]]
 name = "todo"

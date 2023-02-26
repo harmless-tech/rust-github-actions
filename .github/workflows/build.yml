@@ -117,7 +117,7 @@ jobs:
             target/debug/${{ env.bin-name }}
 
   x86_64-apple-darwin:
-    runs-on: macos-12
+    runs-on: macos-latest
     needs: [ deps ]
     steps:
       - uses: actions/checkout@v3
@@ -149,7 +149,7 @@ jobs:
             target/debug/${{ env.bin-name }}
 
   aarch64-apple-darwin:
-    runs-on: macos-12
+    runs-on: macos-latest
     needs: [ deps ]
     steps:
       - uses: actions/checkout@v3
@@ -296,9 +296,11 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cross
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: |
+          cargo prebuilt cross
+          cross --version
       - name: Build
         run: cross build --verbose --workspace --target ${{ matrix.target }}
       - name: Artifact

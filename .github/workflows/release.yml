@@ -162,7 +162,7 @@ jobs:
           asset_paths: '["x86_64-unknown-linux-gnu.tar.gz"]'
 
   x86_64-apple-darwin:
-    runs-on: macos-12
+    runs-on: macos-latest
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
@@ -202,7 +202,7 @@ jobs:
           asset_paths: '["x86_64-apple-darwin.tar.gz"]'
 
   aarch64-apple-darwin:
-    runs-on: macos-12
+    runs-on: macos-latest
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
@@ -379,9 +379,11 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cross
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: |
+          cargo prebuilt cross
+          cross --version
       - name: Build
         run: cross build --verbose --workspace --target ${{ matrix.target }} --release
       - name: Artifact
