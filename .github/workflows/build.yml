@@ -42,14 +42,13 @@ jobs:
         run: cargo prebuilt cargo-audit
       - name: Download Deps
         if: ${{ !steps.cache.outputs.cache-hit }}
-        run: cargo fetch --verbose
+        run: cargo fetch --verbose --locked
       - name: Deps Report
         run: |
-          test -f Cargo.lock || cargo generate-lockfile --verbose
           echo "### Deps:" >> $GITHUB_STEP_SUMMARY
           echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cargo tree --verbose -e normal,build >> $GITHUB_STEP_SUMMARY
+          cargo tree --verbose -e normal,build --locked >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
       - name: Audit Report
         run: |
@@ -95,9 +94,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features
+        run: cargo test --verbose --workspace --all-features --locked
       - name: Build
-        run: cargo auditable build --verbose --workspace
+        run: cargo auditable build --verbose --workspace --locked
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -133,9 +132,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features
+        run: cargo test --verbose --workspace --all-features --locked
       - name: Build
-        run: cargo auditable build --verbose --workspace
+        run: cargo auditable build --verbose --workspace --locked
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -173,7 +172,7 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable
       - name: Build
-        run: cargo auditable build --verbose --workspace --target aarch64-apple-darwin
+        run: cargo auditable build --verbose --workspace --locked --target aarch64-apple-darwin
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -212,9 +211,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features
+        run: cargo test --verbose --workspace --all-features --locked
       - name: Build
-        run: cargo auditable build --verbose --workspace
+        run: cargo auditable build --verbose --workspace --locked
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -255,7 +254,7 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable
       - name: Build
-        run: cargo auditable build --verbose --workspace --target aarch64-pc-windows-msvc
+        run: cargo auditable build --verbose --workspace --locked --target aarch64-pc-windows-msvc
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -296,9 +295,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features --target i686-pc-windows-msvc
+        run: cargo test --verbose --workspace --all-features --locked --target i686-pc-windows-msvc
       - name: Build
-        run: cargo auditable build --verbose --workspace --target i686-pc-windows-msvc
+        run: cargo auditable build --verbose --workspace --locked --target i686-pc-windows-msvc
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -365,7 +364,7 @@ jobs:
           cargo prebuilt cross
           cross --version
       - name: Build
-        run: cross build --verbose --workspace --target ${{ matrix.target }}
+        run: cross build --verbose --workspace --target --locked ${{ matrix.target }}
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:

@@ -40,7 +40,7 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --release -- -D warnings
+        run: cargo clippy --all-targets --all-features --verbose --workspace --release --locked -- -D warnings
 
   deps:
     runs-on: ubuntu-latest
@@ -72,14 +72,14 @@ jobs:
         run: cargo prebuilt cargo-audit
       - name: Download Deps
         if: ${{ !steps.cache.outputs.cache-hit }}
-        run: cargo fetch --verbose
+        run: cargo fetch --verbose --locked
       - name: Deps Report
         run: |
           test -f Cargo.lock || cargo generate-lockfile --verbose
           echo "### Deps:" >> $GITHUB_STEP_SUMMARY
           echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cargo tree --verbose -e normal,build >> $GITHUB_STEP_SUMMARY
+          cargo tree --verbose -e normal,build --locked >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
       - name: Audit Report
         run: |
@@ -134,7 +134,7 @@ jobs:
 # TODO: Publish
 #      - name: Publish
 #        run: |
-#          cargo publish --verbose --token ${CRATES_TOKEN} # -p CRATE
+#          cargo publish --verbose --locked --token ${CRATES_TOKEN} # -p CRATE
 #        env:
 #          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
 
@@ -161,9 +161,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable,coreutils
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features --release
+        run: cargo test --verbose --workspace --all-features --release --locked
       - name: Build
-        run: cargo auditable build --verbose --workspace --release
+        run: cargo auditable build --verbose --workspace --release --locked
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -214,9 +214,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable,coreutils
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features --release
+        run: cargo test --verbose --workspace --all-features --release --locked
       - name: Build
-        run: cargo auditable build --verbose --workspace --release
+        run: cargo auditable build --verbose --workspace --release --locked
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -269,7 +269,7 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable,coreutils
       - name: Build
-        run: cargo auditable build --verbose --workspace --target aarch64-apple-darwin --release
+        run: cargo auditable build --verbose --workspace --release --locked --target aarch64-apple-darwin
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -323,9 +323,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable,coreutils
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features --release
+        run: cargo test --verbose --workspace --all-features --release --locked
       - name: Build
-        run: cargo auditable build --verbose --workspace --release
+        run: cargo auditable build --verbose --workspace --release --locked
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -384,9 +384,9 @@ jobs:
       - name: Install tools
         run: cargo prebuilt cargo-auditable,coreutils
       - name: Run tests
-        run: cargo test --verbose --workspace --all-features --release --target i686-pc-windows-msvc
+        run: cargo test --verbose --workspace --all-features --release --locked --target i686-pc-windows-msvc
       - name: Build
-        run: cargo auditable build --verbose --workspace --target i686-pc-windows-msvc --release
+        run: cargo auditable build --verbose --workspace --release --locked --target i686-pc-windows-msvc
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -471,7 +471,7 @@ jobs:
           cargo prebuilt cross,coreutils
           cross --version
       - name: Build
-        run: cross build --verbose --workspace --target ${{ matrix.target }} --release
+        run: cross build --verbose --workspace --target --release --locked ${{ matrix.target }}
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:

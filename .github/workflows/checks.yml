@@ -37,4 +37,4 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace -- -D warnings
+        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings
