@@ -173,7 +173,7 @@ jobs:
       - name: Tar
         run: tar czvf x86_64-unknown-linux-gnu.tar.gz -C ./target/release ${{ env.bin-name }}
       - name: Hash
-        run: echo "sha256=$(coreutils sha256sum x86_64-unknown-linux-gnu.tar.gz)" > x86_64-unknown-linux-gnu.sha256
+        run: echo "$(coreutils sha256sum x86_64-unknown-linux-gnu.tar.gz)" > x86_64-unknown-linux-gnu.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -226,7 +226,7 @@ jobs:
       - name: Tar
         run: tar czvf x86_64-apple-darwin.tar.gz -C ./target/release ${{ env.bin-name }}
       - name: Hash
-        run: echo "sha256=$(coreutils sha256sum x86_64-apple-darwin.tar.gz)" > x86_64-apple-darwin.sha256
+        run: echo "$(coreutils sha256sum x86_64-apple-darwin.tar.gz)" > x86_64-apple-darwin.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -279,7 +279,7 @@ jobs:
       - name: Tar
         run: tar czvf aarch64-apple-darwin.tar.gz -C ./target/aarch64-apple-darwin/release ${{ env.bin-name }}
       - name: Hash
-        run: echo "sha256=$(coreutils sha256sum aarch64-apple-darwin.tar.gz)" > aarch64-apple-darwin.sha256
+        run: echo "$(coreutils sha256sum aarch64-apple-darwin.tar.gz)" > aarch64-apple-darwin.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -338,7 +338,7 @@ jobs:
           files: ./target/release/${{ env.bin-name }}.exe
           dest: x86_64-pc-windows-msvc.zip
       - name: Hash
-        run: echo "sha256=$(coreutils sha256sum x86_64-pc-windows-msvc.zip)" > x86_64-pc-windows-msvc.sha256
+        run: echo "$(coreutils sha256sum x86_64-pc-windows-msvc.zip)" > x86_64-pc-windows-msvc.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -355,6 +355,65 @@ jobs:
           prerelease: ${{ needs.release.outputs.prerelease }}
           file_glob: true
           file: x86_64-pc-windows-msvc.*
+
+  aarch64-pc-windows-msvc:
+    runs-on: windows-latest
+    needs: [ deps, release ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Change file endings in Cargo.lock
+        shell: pwsh
+        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
+      - name: Get deps from cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
+      - name: Update Rust
+        run: rustup update
+      - name: Rust Version
+        run: rustc --version
+      - name: Add Rust target
+        run: rustup target add aarch64-pc-windows-msvc
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-auditable,coreutils
+      - name: Build
+        run: cargo auditable build --verbose --workspace --release --locked --target aarch64-pc-windows-msvc
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: aarch64-pc-windows-msvc
+          path: |
+            target/aarch64-pc-windows-msvc/release/${{ env.bin-name }}.exe
+      - name: Zip
+        uses: vimtor/action-zip@v1.1
+        with:
+          files: ./target/aarch64-pc-windows-msvc/release/${{ env.bin-name }}.exe
+          dest: aarch64-pc-windows-msvc.zip
+      - name: Hash
+        run: echo "$(coreutils sha256sum aarch64-pc-windows-msvc.zip)" > aarch64-pc-windows-msvc.sha256
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: aarch64-pc-windows-msvc
+          path: |
+            aarch64-pc-windows-msvc.zip
+            aarch64-pc-windows-msvc.sha256
+      - name: Release Artifact
+        uses: svenstaro/upload-release-action@2.5.0
+        with:
+          tag: ${{ needs.release.outputs.tag }}
+          release_name: ${{ needs.release.outputs.name }}
+          overwrite: true
+          prerelease: ${{ needs.release.outputs.prerelease }}
+          file_glob: true
+          file: aarch64-pc-windows-msvc.*
 
   i686-pc-windows-msvc:
     runs-on: windows-latest
@@ -399,7 +458,7 @@ jobs:
           files: ./target/i686-pc-windows-msvc/release/${{ env.bin-name }}.exe
           dest: i686-pc-windows-msvc.zip
       - name: Hash
-        run: echo "sha256=$(coreutils sha256sum i686-pc-windows-msvc.zip)" > i686-pc-windows-msvc.sha256
+        run: echo "$(coreutils sha256sum i686-pc-windows-msvc.zip)" > i686-pc-windows-msvc.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -481,7 +540,7 @@ jobs:
       - name: Tar
         run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
       - name: Hash
-        run: echo "sha256=$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
+        run: echo "$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
