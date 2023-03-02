@@ -471,7 +471,7 @@ jobs:
           cargo prebuilt cross,coreutils
           cross --version
       - name: Build
-        run: cross build --verbose --workspace --target --release --locked ${{ matrix.target }}
+        run: cross build --verbose --workspace --release --locked --target ${{ matrix.target }}
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
