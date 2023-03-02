@@ -48,16 +48,16 @@ jobs:
           test -f Cargo.lock || cargo generate-lockfile --verbose
           echo "### Deps:" >> $GITHUB_STEP_SUMMARY
           echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           cargo tree --verbose -e normal,build >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
       - name: Audit Report
         run: |
           echo "### Audit:" >> $GITHUB_STEP_SUMMARY
           echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           cargo audit >> $GITHUB_STEP_SUMMARY || true
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
       - name: Store Deps
         if: ${{ !steps.cache.outputs.cache-hit }}
         run: |
