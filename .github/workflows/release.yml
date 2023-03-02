@@ -25,13 +25,16 @@ jobs:
     needs: [ deps ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -43,37 +46,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+      - name: Move deps
+        if: ${{ steps.cache.outputs.cache-hit }}
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Create Folders
+        if: ${{ !steps.cache.outputs.cache-hit }}
         run: |
           mkdir -p ~/.cargo/registry/index
           mkdir -p ~/.cargo/registry/cache
           mkdir -p ~/.cargo/git/db
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-          key: ${{ runner.os }}-deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          mkdir -p ./.cargo-store
       - name: Update Rust
         run: rustup update
       - name: Rust Version
         run: rustc --version
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-audit
       - name: Download Deps
+        if: ${{ !steps.cache.outputs.cache-hit }}
         run: cargo fetch --verbose
-      - name: Bundle Deps
+      - name: Deps Report
         run: |
-          mkdir -p .cargo-store/.cargo-store/registry
-          mkdir -p .cargo-store/.cargo-store/git
-          cp -r ~/.cargo/registry/index ./.cargo-store/.cargo-store/registry/index
-          cp -r ~/.cargo/registry/cache ./.cargo-store/.cargo-store/registry/cache
-          cp -r ~/.cargo/git/db ./.cargo-store/.cargo-store/git/db
-      - name: Store Crate Deps
-        uses: actions/upload-artifact@v3
-        with:
-          name: crate-deps
-          path: .cargo-store
-          retention-days: 1
+          test -f Cargo.lock || cargo generate-lockfile --verbose
+          echo "### Deps:" >> $GITHUB_STEP_SUMMARY
+          echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cargo tree --verbose -e normal,build >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+      - name: Audit Report
+        run: |
+          echo "### Audit:" >> $GITHUB_STEP_SUMMARY
+          echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cargo audit >> $GITHUB_STEP_SUMMARY || true
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+      - name: Store Deps
+        if: ${{ !steps.cache.outputs.cache-hit }}
+        run: |
+          mkdir -p ./.cargo-store/registry
+          mkdir -p ./.cargo-store/git
+          cp -r ~/.cargo/registry/index ./.cargo-store/registry
+          cp -r ~/.cargo/registry/cache ./.cargo-store/registry
+          cp -r ~/.cargo/git/db ./.cargo-store/git
 
   release:
     runs-on: ubuntu-latest
@@ -95,13 +117,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -118,21 +143,27 @@ jobs:
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
         run: rustc --version
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-auditable
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --release
       - name: Build
-        run: cargo build --verbose --workspace --release
+        run: cargo auditable build --verbose --workspace --release
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -153,21 +184,27 @@ jobs:
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
         run: rustc --version
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-auditable
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --release
       - name: Build
-        run: cargo build --verbose --workspace --release
+        run: cargo auditable build --verbose --workspace --release
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -188,21 +225,27 @@ jobs:
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
         run: rustc --version
       - name: Add Rust target
         run: rustup target add aarch64-apple-darwin
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-auditable
       - name: Build
-        run: cargo build --verbose --workspace --target aarch64-apple-darwin --release
+        run: cargo auditable build --verbose --workspace --target aarch64-apple-darwin --release
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -223,21 +266,30 @@ jobs:
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Change file endings in Cargo.lock
+        shell: pwsh
+        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
         run: rustc --version
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-auditable
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --release
       - name: Build
-        run: cargo build --verbose --workspace --release
+        run: cargo auditable build --verbose --workspace --release
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -261,23 +313,32 @@ jobs:
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Change file endings in Cargo.lock
+        shell: pwsh
+        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
         run: rustc --version
       - name: Add Rust target
         run: rustup target add i686-pc-windows-msvc
+      - uses: crow-rest/cargo-prebuilt-action@v1
+      - name: Install tools
+        run: cargo prebuilt cargo-auditable
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --release --target i686-pc-windows-msvc
       - name: Build
-        run: cargo build --verbose --workspace --target i686-pc-windows-msvc --release
+        run: cargo auditable build --verbose --workspace --target i686-pc-windows-msvc --release
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -330,13 +391,16 @@ jobs:
     needs: [ deps, release ]
     steps:
       - uses: actions/checkout@v3
-      - name: Download Deps
-        uses: actions/download-artifact@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          name: crate-deps
-      - name: Move Deps
-        run: |
-          mv ./.cargo-store/* ~/.cargo
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
       - name: Update Rust
         run: rustup update
       - name: Rust Version
