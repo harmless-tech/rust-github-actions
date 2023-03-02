@@ -32,11 +32,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-clippy-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -130,11 +125,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-x86_64-unknown-linux-gnu-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -170,11 +160,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-x86_64-apple-darwin-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -210,11 +195,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-aarch64-apple-darwin-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -250,11 +230,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-x86_64-pc-windows-msvc-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -293,11 +268,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-i686-pc-windows-msvc-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
@@ -367,11 +337,6 @@ jobs:
       - name: Move Deps
         run: |
           mv ./.cargo-store/* ~/.cargo
-      - uses: actions/cache@v3
-        with:
-          path: |
-            target
-          key: ${{ runner.os }}-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
       - name: Update Rust
         run: rustup update
       - name: Rust Version
