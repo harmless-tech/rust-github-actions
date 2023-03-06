@@ -36,3 +36,6 @@ Some simple GitHub action workflows for checking, testing/building, and releasin
   ```shell
   wget -P .github/workflows https://github.com/harmless-tech/rust-github-actions/raw/main/.github/workflows/release.yml
   ```
+  
+<br>
+You can see an example of these actions in action [here](https://github.com/crow-rest/cargo-prebuilt).
