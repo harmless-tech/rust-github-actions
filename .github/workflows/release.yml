@@ -72,8 +72,8 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-audit
+        with:
+          tools: cargo-audit
       - name: Download Deps
         if: ${{ !steps.cache.outputs.cache-hit }}
         run: cargo fetch --verbose --locked
@@ -162,8 +162,8 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-auditable,coreutils
+        with:
+          tools: cargo-auditable,coreutils
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --release --locked
       - name: Build
@@ -225,8 +225,8 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-auditable,coreutils
+        with:
+          tools: cargo-auditable,coreutils
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
@@ -294,8 +294,8 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-auditable,coreutils
+        with:
+          tools: cargo-auditable,coreutils
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
@@ -405,10 +405,8 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: |
-          cargo prebuilt cross,coreutils
-          cross --version
+        with:
+          tools: cross,coreutils
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cross test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}

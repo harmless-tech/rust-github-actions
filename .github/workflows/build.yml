@@ -42,8 +42,8 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-audit
+        with:
+          tools: cargo-audit
       - name: Download Deps
         if: ${{ !steps.cache.outputs.cache-hit }}
         run: cargo fetch --verbose --locked
@@ -95,8 +95,8 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-auditable
+        with:
+          tools: cargo-auditable
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --locked
       - name: Build
@@ -143,8 +143,8 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-auditable
+        with:
+          tools: cargo-auditable
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cargo test --verbose --workspace --all-features --locked --target ${{ matrix.target }}
@@ -197,8 +197,8 @@ jobs:
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: cargo prebuilt cargo-auditable
+        with:
+          tools: cargo-auditable
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cargo test --verbose --workspace --all-features --locked --target ${{ matrix.target }}
@@ -290,10 +290,8 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - uses: crow-rest/cargo-prebuilt-action@v1
-      - name: Install tools
-        run: |
-          cargo prebuilt cross
-          cross --version
+        with:
+          tools: cross
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cross test --verbose --workspace --all-features --locked --target ${{ matrix.target }}
