@@ -22,11 +22,12 @@ jobs:
       - name: Install nightly
         run: rustup toolchain install nightly --allow-downgrade -c rustfmt
       - name: Rustfmt Check
-        run: cargo +nightly fmt --check |& tee .step-data.txt
+        run: |
+          set -o pipefail
+          cargo +nightly fmt --check 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
-        run: |
-          echo "Success" >> $GITHUB_STEP_SUMMARY
+        run: echo "Success" >> $GITHUB_STEP_SUMMARY
       - name: Put into summary (failure)
         if: failure()
         run: |
@@ -52,11 +53,12 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings |& tee .step-data.txt
+        run: |
+          set -o pipefail
+          cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
-        run: |
-          echo "Success" >> $GITHUB_STEP_SUMMARY
+        run: echo "Success" >> $GITHUB_STEP_SUMMARY
       - name: Put into summary (failure)
         if: failure()
         run: |
@@ -82,11 +84,12 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings |& tee .step-data.txt
+        run: |
+          set -o pipefail
+          cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
-        run: |
-          echo "Success" >> $GITHUB_STEP_SUMMARY
+        run: echo "Success" >> $GITHUB_STEP_SUMMARY
       - name: Put into summary (failure)
         if: failure()
         run: |
@@ -112,11 +115,10 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings |& tee .step-data.txt
+        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
-        run: |
-          echo "Success" >> $GITHUB_STEP_SUMMARY
+        run: echo "Success" >> $GITHUB_STEP_SUMMARY
       - name: Put into summary (failure)
         if: failure()
         run: |
