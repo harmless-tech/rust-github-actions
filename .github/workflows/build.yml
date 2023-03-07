@@ -12,8 +12,8 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_TERM_COLOR: always
   bin-name: todo
+  CARGO_TERM_COLOR: always
 
 jobs:
   setup:

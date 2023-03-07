@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_TERM_COLOR: always
   bin-name: todo
+  CARGO_TERM_COLOR: never
 
 jobs:
   check-fmt:
@@ -32,7 +32,7 @@ jobs:
         if: failure()
         run: |
           echo "Failed!" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`shell" >> $GITHUB_STEP_SUMMARY
           cat .step-data.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
@@ -66,7 +66,7 @@ jobs:
         if: failure()
         run: |
           echo "Failed!" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`shell" >> $GITHUB_STEP_SUMMARY
           cat .step-data.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           
@@ -100,7 +100,7 @@ jobs:
         if: failure()
         run: |
           echo "Failed!" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`shell" >> $GITHUB_STEP_SUMMARY
           cat .step-data.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
@@ -135,7 +135,7 @@ jobs:
         if: failure()
         run: |
           echo "Failed!" >> $env:GITHUB_STEP_SUMMARY
-          "``````" >> $env:GITHUB_STEP_SUMMARY
+          "``````powershell" >> $env:GITHUB_STEP_SUMMARY
           cat .step-data.txt >> $env:GITHUB_STEP_SUMMARY
           "``````" >> $env:GITHUB_STEP_SUMMARY
 
