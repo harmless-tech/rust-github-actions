@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 env:
-  CARGO_TERM_COLOR: always
+  CARGO_TERM_COLOR: never
 
 jobs:
   fmt-check:
@@ -118,11 +118,11 @@ jobs:
         run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
-        run: echo "Success" >> $GITHUB_STEP_SUMMARY
+        run: echo "Success" >> $env:GITHUB_STEP_SUMMARY
       - name: Put into summary (failure)
         if: failure()
         run: |
-          echo "Failed!" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "Failed!" >> $env:GITHUB_STEP_SUMMARY
+          "``````" >> $env:GITHUB_STEP_SUMMARY
+          cat .step-data.txt >> $env:GITHUB_STEP_SUMMARY
+          "``````" >> $env:GITHUB_STEP_SUMMARY
