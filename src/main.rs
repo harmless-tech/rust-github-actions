@@ -1,5 +1,6 @@
 fn main() {
     println!("Hello, world!");
+    let useless = "22";
 }
 
 #[cfg(test)]
