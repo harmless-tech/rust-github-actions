@@ -22,7 +22,12 @@ jobs:
       - name: Install nightly
         run: rustup toolchain install nightly --allow-downgrade -c rustfmt
       - name: Rustfmt Check
-        run: cargo +nightly fmt --check
+        run: cargo +nightly fmt --check | tee .step-data.txt
+      - name: Put into summary
+        run: |
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   clippy-x86_64-unknown-linux-gnu:
     runs-on: ubuntu-latest
@@ -41,10 +46,15 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings
+        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings | tee .step-data.txt
+      - name: Put into summary
+        run: |
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   clippy-x86_64-apple-darwin:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -60,10 +70,15 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings
+        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings | tee .step-data.txt
+      - name: Put into summary
+        run: |
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   clippy-x86_64-pc-windows-msvc:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -79,4 +94,9 @@ jobs:
       - name: Rust Version
         run: rustc --version
       - name: Clippy Check
-        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings
+        run: cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings | tee .step-data.txt
+      - name: Put into summary
+        run: |
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
