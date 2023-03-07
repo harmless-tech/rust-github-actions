@@ -1,7 +1,7 @@
 name: Rust Build, Test, and Release
 ## Name: Rust Build, Test, and Release
 ## Author: harmless-tech
-## Version: cache-based-1.2.0
+## Version: cache-based-1.2.1
 ## Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
@@ -12,10 +12,12 @@ on:
 
 env:
   bin-name: todo
-  CARGO_TERM_COLOR: never
+  CARGO_TERM_COLOR: always
 
 jobs:
   check-fmt:
+    env:
+      CARGO_TERM_COLOR: never
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -37,6 +39,8 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   clippy-x86_64-unknown-linux-gnu:
+    env:
+      CARGO_TERM_COLOR: never
     runs-on: ubuntu-latest
     needs: [ setup ]
     steps:
@@ -71,6 +75,8 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
           
   clippy-x86_64-apple-darwin:
+    env:
+      CARGO_TERM_COLOR: never
     runs-on: macos-latest
     needs: [ setup ]
     steps:
@@ -105,6 +111,8 @@ jobs:
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   clippy-x86_64-pc-windows-msvc:
+    env:
+      CARGO_TERM_COLOR: never
     runs-on: windows-latest
     needs: [ setup ]
     steps:
