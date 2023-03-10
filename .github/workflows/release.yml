@@ -1,7 +1,7 @@
 name: Rust Build, Test, and Release
 ## Name: Rust Build, Test, and Release
 ## Author: harmless-tech
-## Version: cache-based-1.2.2
+## Version: cache-based-1.2.3
 ## Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
@@ -159,6 +159,12 @@ jobs:
             .cargo-store
           key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
           enableCrossOsArchive: true
+      - name: Cache Advisory DB
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/advisory-db
+          key: cache-advisory-db
       - name: Move deps
         if: ${{ steps.cache.outputs.cache-hit }}
         run: mv ./.cargo-store/* ~/.cargo
