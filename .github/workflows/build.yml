@@ -153,10 +153,6 @@ jobs:
             can-test: true
           - target: mipsel-unknown-linux-musl
             can-test: true
-          - target: x86_64-pc-windows-gnu
-            can-test: true
-          - target: i686-pc-windows-gnu
-            can-test: true
     runs-on: ubuntu-latest
     needs: [ setup ]
     steps:
@@ -252,13 +248,14 @@ jobs:
             can-test: false
           - target: i686-pc-windows-msvc
             can-test: true
+          - target: x86_64-pc-windows-gnu
+            can-test: true
+          - target: i686-pc-windows-gnu
+            can-test: true
     runs-on: windows-latest
     needs: [ setup ]
     steps:
       - uses: actions/checkout@v3
-#      - name: Change file endings in Cargo.lock
-#        shell: pwsh
-#        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
       - name: Change file endings in Cargo.lock
         shell: bash
         run: |
