@@ -30,25 +30,25 @@ jobs:
           text: ${{ github.ref }}
           regex: '^refs\/tags\/v\d+\.\d+\.\d+$'
 
-    publish:
-      runs-on: ubuntu-latest
-      needs: [ release, check-fmt, clippy x86_64-unknown-linux-gnu, apple-darwin, pc-windows-msvc, cross ]
-      steps:
-        - uses: actions/checkout@v3
-        - name: Get deps from cache
-          uses: actions/cache@v3
-          with:
-            path: |
-              .cargo-store
-            key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-            enableCrossOsArchive: true
-            fail-on-cache-miss: true
-        - name: Move deps
-          run: mv ./.cargo-store/* ~/.cargo
-        - name: Update Rust
-          run: rustup update
-        - name: Rust Version
-          run: rustc --version
+  publish:
+    runs-on: ubuntu-latest
+    needs: [ release, check-fmt, clippy, x86_64-unknown-linux-gnu, apple-darwin, pc-windows-msvc, cross ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
+      - name: Update Rust
+        run: rustup update
+      - name: Rust Version
+        run: rustc --version
 #TODO: Publish
 #        - name: Publish
 #          run: |
@@ -83,7 +83,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target:
+        include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
           - target: x86_64-apple-darwin
