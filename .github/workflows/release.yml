@@ -407,9 +407,16 @@ jobs:
     needs: [ setup, check-fmt, clippy ]
     steps:
       - uses: actions/checkout@v3
+#      - name: Change file endings in Cargo.lock
+#        shell: pwsh
+#        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
       - name: Change file endings in Cargo.lock
-        shell: pwsh
-        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
+        shell: bash
+        run: |
+          ex Cargo.lock <<EOF
+          :set fileformat=unix
+          :wq
+          EOF
       - name: Get deps from cache
         uses: actions/cache@v3
         with:
