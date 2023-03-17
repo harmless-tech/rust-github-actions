@@ -10,8 +10,6 @@ on:
       - "v**"
   workflow_dispatch:
 
-## TODO: https://gist.githubusercontent.com/harmless-tech/1e8ba45c4e2762e6c013dd2687e3e5bf/raw/2e085e677fcaea6bcd823e23e9dd908b0b79397b/Cross.toml
-
 env:
   bin-name: todo
   allow-cross-auditable: true
