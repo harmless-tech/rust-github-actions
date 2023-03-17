@@ -96,7 +96,7 @@ jobs:
           cargo audit >> $GITHUB_STEP_SUMMARY || true
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  tests:
+  test:
     strategy:
       fail-fast: false
       matrix:
@@ -137,7 +137,7 @@ jobs:
       - name: Run tests
         run: cargo test --verbose --workspace --all-features --locked
 
-  builds:
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -171,7 +171,7 @@ jobs:
           - x86_64-pc-windows-gnu # Windows
           - i686-pc-windows-gnu
     runs-on: ubuntu-latest
-    needs: [ setup, tests ]
+    needs: [ setup, test ]
     steps:
       - uses: actions/checkout@v3
       - name: Get deps from cache
@@ -202,11 +202,8 @@ jobs:
       - uses: crow-rest/cargo-prebuilt-action@v1
         with:
           tools: cargo-auditable,cargo-zigbuild
-      - name: Run tests
-        if: ${{ matrix.can-test }}
-        run: cargo test --verbose --workspace --all-features --locked --target ${{ matrix.target }}
       - name: Build
-        run: cargo auditable zigbuild --verbose --workspace --locked --target ${{ matrix.target }}
+        run: cargo zigbuild --verbose --workspace --locked --target ${{ matrix.target }}
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
@@ -222,7 +219,7 @@ jobs:
           - x86_64-apple-darwin
           - aarch64-apple-darwin
     runs-on: macos-latest
-    needs: [ setup, tests ]
+    needs: [ setup, test ]
     steps:
       - uses: actions/checkout@v3
       - name: Get deps from cache
@@ -271,7 +268,7 @@ jobs:
           - aarch64-pc-windows-msvc
           - i686-pc-windows-msvc
     runs-on: windows-latest
-    needs: [ setup, tests ]
+    needs: [ setup, test ]
     steps:
       - uses: actions/checkout@v3
       - name: Change file endings in Cargo.lock
