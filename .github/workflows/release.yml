@@ -1,14 +1,16 @@
 name: Rust Build, Test, and Release
-## Name: Rust Build, Test, and Release
-## Author: harmless-tech
-## Version: audit-1.0.0
-## Git Repo: https://github.com/harmless-tech/rust-github-actions
+### Name: Rust Build, Test, and Release
+### Author: harmless-tech
+### Version: audit-1.0.0
+### Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
   push:
     tags:
       - "v**"
   workflow_dispatch:
+
+## TODO: https://gist.githubusercontent.com/harmless-tech/1e8ba45c4e2762e6c013dd2687e3e5bf/raw/2e085e677fcaea6bcd823e23e9dd908b0b79397b/Cross.toml
 
 env:
   bin-name: todo
@@ -30,9 +32,9 @@ jobs:
           text: ${{ github.ref }}
           regex: '^refs\/tags\/v\d+\.\d+\.\d+$'
 
-  publish:
+  publish-crates-io:
     runs-on: ubuntu-latest
-    needs: [ release, check-fmt, clippy, x86_64-unknown-linux-gnu, apple-darwin, pc-windows-msvc, cross ]
+    needs: [ release, check-fmt, clippy, cross, apple-darwin, pc-windows-msvc ]
     steps:
       - uses: actions/checkout@v3
       - name: Get deps from cache
@@ -55,6 +57,22 @@ jobs:
 #            cargo publish --verbose --locked --token ${CRATES_TOKEN} # -p CRATE
 #          env:
 #            CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
+
+  publish-github-releases:
+    runs-on: ubuntu-latest
+    needs: [ release, check-fmt, clippy, cross, apple-darwin, pc-windows-msvc ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
+      - name: Create and push artifacts to release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.release.outputs.tag }}
+          name: ${{ needs.release.outputs.name }}
+          allowUpdates: true
+          prerelease: ${{ needs.release.outputs.prerelease }}
+          artifacts: "target-*/*.tar.gz,target-*/*.sha256"
+          body: ""
 
   check-fmt:
     env:
@@ -210,200 +228,13 @@ jobs:
           cargo audit >> $GITHUB_STEP_SUMMARY || true
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  x86_64-unknown-linux-gnu:
-    runs-on: ubuntu-latest
-    needs: [ setup, release ]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - uses: crow-rest/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-auditable,coreutils
-      - name: Run tests
-        run: cargo test --verbose --workspace --all-features --release --locked
-      - name: Build
-        run: cargo auditable build --verbose --workspace --release --locked
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: x86_64-unknown-linux-gnu
-          path: |
-            target/release/${{ env.bin-name }}
-      - name: Tar
-        run: tar czvf x86_64-unknown-linux-gnu.tar.gz -C ./target/release ${{ env.bin-name }}
-      - name: Hash
-        run: echo "$(coreutils sha256sum x86_64-unknown-linux-gnu.tar.gz)" > x86_64-unknown-linux-gnu.sha256
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: x86_64-unknown-linux-gnu
-          path: |
-            x86_64-unknown-linux-gnu.tar.gz
-            x86_64-unknown-linux-gnu.sha256
-      - name: Release Artifact
-        uses: svenstaro/upload-release-action@2.5.0
-        with:
-          tag: ${{ needs.release.outputs.tag }}
-          release_name: ${{ needs.release.outputs.name }}
-          overwrite: true
-          prerelease: ${{ needs.release.outputs.prerelease }}
-          file_glob: true
-          file: x86_64-unknown-linux-gnu.*
-
-  apple-darwin:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-apple-darwin
-            can-test: true
-          - target: aarch64-apple-darwin
-            can-test: false
-    runs-on: macos-latest
-    needs: [ setup, release ]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.target }}
-      - uses: crow-rest/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-auditable,coreutils
-      - name: Run tests
-        if: ${{ matrix.can-test }}
-        run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
-      - name: Build
-        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/${{ env.bin-name }}
-      - name: Tar
-        run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
-      - name: Hash
-        run: echo "$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            ${{ matrix.target }}.tar.gz
-            ${{ matrix.target }}.sha256
-      - name: Release Artifact
-        uses: svenstaro/upload-release-action@2.5.0
-        with:
-          tag: ${{ needs.release.outputs.tag }}
-          release_name: ${{ needs.release.outputs.name }}
-          overwrite: true
-          prerelease: ${{ needs.release.outputs.prerelease }}
-          file_glob: true
-          file: ${{ matrix.target }}.*
-
-  pc-windows-msvc:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - target: x86_64-pc-windows-msvc
-            can-test: true
-          - target: aarch64-pc-windows-msvc
-            can-test: false
-          - target: i686-pc-windows-msvc
-            can-test: true
-    runs-on: windows-latest
-    needs: [ setup, release ]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Change file endings in Cargo.lock
-        shell: pwsh
-        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.target }}
-      - uses: crow-rest/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-auditable,coreutils
-      - name: Run tests
-        if: ${{ matrix.can-test }}
-        run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
-      - name: Build
-        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/${{ env.bin-name }}.exe
-      - name: Zip
-        uses: vimtor/action-zip@v1.1
-        with:
-          files: ./target/${{ matrix.target }}/release/${{ env.bin-name }}.exe
-          dest: ${{ matrix.target }}.zip
-      - name: Hash
-        run: echo "$(coreutils sha256sum ${{ matrix.target }}.zip)" > ${{ matrix.target }}.sha256
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            ${{ matrix.target }}.zip
-            ${{ matrix.target }}.sha256
-      - name: Release Artifact
-        uses: svenstaro/upload-release-action@2.5.0
-        with:
-          tag: ${{ needs.release.outputs.tag }}
-          release_name: ${{ needs.release.outputs.name }}
-          overwrite: true
-          prerelease: ${{ needs.release.outputs.prerelease }}
-          file_glob: true
-          file: ${{ matrix.target }}.*
-
   cross:
     strategy:
       fail-fast: false
       matrix:
         include:
+          - target: x86_64-unknown-linux-gnu
+            can-test: true
           - target: x86_64-unknown-linux-musl
             can-test: true
           - target: aarch64-unknown-linux-gnu
@@ -454,8 +285,12 @@ jobs:
             can-test: true
           - target: mipsel-unknown-linux-musl
             can-test: true
+          - target: x86_64-pc-windows-gnu
+            can-test: true
+          - target: i686-pc-windows-gnu
+            can-test: true
     runs-on: ubuntu-latest
-    needs: [ setup, release ]
+    needs: [ setup, check-fmt, clippy ]
     steps:
       - uses: actions/checkout@v3
       - name: Get deps from cache
@@ -493,16 +328,125 @@ jobs:
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.target }}
+          name: target-${{ matrix.target }}
           path: |
             ${{ matrix.target }}.tar.gz
             ${{ matrix.target }}.sha256
-      - name: Release Artifact
-        uses: svenstaro/upload-release-action@2.5.0
+
+  apple-darwin:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            can-test: true
+          - target: aarch64-apple-darwin
+            can-test: false
+    runs-on: macos-latest
+    needs: [ setup, check-fmt, clippy ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get deps from cache
+        uses: actions/cache@v3
         with:
-          tag: ${{ needs.release.outputs.tag }}
-          release_name: ${{ needs.release.outputs.name }}
-          overwrite: true
-          prerelease: ${{ needs.release.outputs.prerelease }}
-          file_glob: true
-          file: ${{ matrix.target }}.*
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
+      - name: Update Rust
+        run: rustup update
+      - name: Rust Version
+        run: rustc --version
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+      - uses: crow-rest/cargo-prebuilt-action@v1
+        with:
+          tools: cargo-auditable,coreutils
+      - name: Run tests
+        if: ${{ matrix.can-test }}
+        run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
+      - name: Build
+        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/${{ env.bin-name }}
+      - name: Tar
+        run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
+      - name: Hash
+        run: echo "$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: target-${{ matrix.target }}
+          path: |
+            ${{ matrix.target }}.tar.gz
+            ${{ matrix.target }}.sha256
+
+  pc-windows-msvc:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            can-test: true
+          - target: aarch64-pc-windows-msvc
+            can-test: false
+          - target: i686-pc-windows-msvc
+            can-test: true
+    runs-on: windows-latest
+    needs: [ setup, check-fmt, clippy ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Change file endings in Cargo.lock
+        shell: pwsh
+        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
+      - name: Get deps from cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            .cargo-store
+          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
+          enableCrossOsArchive: true
+          fail-on-cache-miss: true
+      - name: Move deps
+        run: mv ./.cargo-store/* ~/.cargo
+      - name: Update Rust
+        run: rustup update
+      - name: Rust Version
+        run: rustc --version
+      - name: Add Rust target
+        run: rustup target add ${{ matrix.target }}
+      - uses: crow-rest/cargo-prebuilt-action@v1
+        with:
+          tools: cargo-auditable,coreutils
+      - name: Run tests
+        if: ${{ matrix.can-test }}
+        run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
+      - name: Build
+        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/${{ env.bin-name }}.exe
+      - name: Zip
+        uses: vimtor/action-zip@v1.1
+        with:
+          files: ./target/${{ matrix.target }}/release/${{ env.bin-name }}.exe
+          dest: ${{ matrix.target }}.zip
+      - name: Hash
+        run: echo "$(coreutils sha256sum ${{ matrix.target }}.zip)" > ${{ matrix.target }}.sha256
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: target-${{ matrix.target }}
+          path: |
+            ${{ matrix.target }}.zip
+            ${{ matrix.target }}.sha256
