@@ -1,8 +1,8 @@
 name: Rust Checks
-## Name: Rust Checks
-## Author: harmless-tech
-## Version: audit-1.0.0
-## Git Repo: https://github.com/harmless-tech/rust-github-actions
+### Name: Rust Checks
+### Author: harmless-tech
+### Version: audit-1.0.0
+### Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
   push:
