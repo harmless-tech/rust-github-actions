@@ -288,8 +288,10 @@ jobs:
             can-test: true
           - target: x86_64-pc-windows-gnu
             can-test: true
+            ending: .exe
           - target: i686-pc-windows-gnu
             can-test: true
+            ending: .exe
     runs-on: ubuntu-latest
     needs: [ setup, check-fmt, clippy ]
     steps:
@@ -319,14 +321,8 @@ jobs:
         run: curl -fsSL https://gist.githubusercontent.com/harmless-tech/1e8ba45c4e2762e6c013dd2687e3e5bf/raw/2e085e677fcaea6bcd823e23e9dd908b0b79397b/Cross.toml >> Cross.toml
       - name: Build
         run: cross build --verbose --workspace --release --locked --target ${{ matrix.target }}
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/${{ env.bin-name }}
       - name: Tar
-        run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
+        run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}${{ matrix.ending }}
       - name: Hash
         run: echo "$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
       - name: Artifact
@@ -374,12 +370,6 @@ jobs:
         run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
       - name: Build
         run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/${{ env.bin-name }}
       - name: Tar
         run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
       - name: Hash
@@ -407,9 +397,6 @@ jobs:
     needs: [ setup, check-fmt, clippy ]
     steps:
       - uses: actions/checkout@v3
-#      - name: Change file endings in Cargo.lock
-#        shell: pwsh
-#        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
       - name: Change file endings in Cargo.lock
         shell: bash
         run: |
@@ -441,12 +428,6 @@ jobs:
         run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
       - name: Build
         run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
-      - name: Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.target }}
-          path: |
-            target/${{ matrix.target }}/release/${{ env.bin-name }}.exe
       - name: Zip
         uses: vimtor/action-zip@v1.1
         with:
