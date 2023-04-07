@@ -13,7 +13,6 @@ on:
 
 env:
   bin-name: todo
-  fail-fast: false
   allow-cargo-hack: true
   CARGO_TERM_COLOR: always
   CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
@@ -100,7 +99,7 @@ jobs:
 
   cross:
     strategy:
-      fail-fast: ${{ env.fail-fast }}
+      fail-fast: true
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
@@ -201,7 +200,7 @@ jobs:
 
   apple-darwin:
     strategy:
-      fail-fast: ${{ env.fail-fast }}
+      fail-fast: true
       matrix:
         include:
           - target: x86_64-apple-darwin
@@ -247,7 +246,7 @@ jobs:
 
   pc-windows-msvc:
     strategy:
-      fail-fast: ${{ env.fail-fast }}
+      fail-fast: true
       matrix:
         include:
           - target: x86_64-pc-windows-msvc
