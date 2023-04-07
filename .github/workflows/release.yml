@@ -428,7 +428,7 @@ jobs:
           - target: i686-pc-windows-msvc
             can-test: true
     runs-on: windows-latest
-    needs: [ setup, check-fmt, clippy ]
+    needs: [ release, setup, check-fmt, clippy ]
     steps:
       - uses: actions/checkout@v3
       - name: Change file endings in Cargo.lock
