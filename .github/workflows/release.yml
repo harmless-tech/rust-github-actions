@@ -209,7 +209,7 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
-      - uses: crow-rest/cargo-prebuilt-action@v1
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
         with:
           tools: cargo-audit
       - name: Deps Report
@@ -309,7 +309,7 @@ jobs:
         run: rustup update
       - name: Rust Version
         run: rustc --version
-      - uses: crow-rest/cargo-prebuilt-action@v1
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
         with:
           tools: cross,coreutils
       - name: Run tests
@@ -361,7 +361,7 @@ jobs:
         run: rustc --version
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
-      - uses: crow-rest/cargo-prebuilt-action@v1
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
         with:
           tools: cargo-auditable,coreutils
       - name: Run tests
@@ -419,7 +419,7 @@ jobs:
         run: rustc --version
       - name: Add Rust target
         run: rustup target add ${{ matrix.target }}
-      - uses: crow-rest/cargo-prebuilt-action@v1
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
         with:
           tools: cargo-auditable,coreutils
       - name: Run tests
