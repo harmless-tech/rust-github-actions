@@ -158,7 +158,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          cargo msrv --verbose --workspace --locked 2>&1 | tee .step-data.txt
+          cargo msrv --locked 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
         shell: bash
