@@ -1,7 +1,7 @@
 name: Rust Build, Test, and Release
 ### Name: Rust Build, Test, and Release
 ### Author: harmless-tech
-### Version: audit-2.5.0
+### Version: audit-3.0.0
 ### Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
