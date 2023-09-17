@@ -15,39 +15,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  reports:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Update Rust
-        run: |
-          rustup update
-          rustc --version
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
-        with:
-          pkgs: cargo-audit
-      - uses: Swatinem/rust-cache@v2
-      - name: Cache Advisory DB
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/advisory-db
-          key: cache-advisory-db
-      - name: Deps Report
-        run: |
-          echo "### Deps:" >> $GITHUB_STEP_SUMMARY
-          echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cargo tree --verbose -e normal,build --locked >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-      - name: Audit Report
-        run: |
-          echo "### Audit:" >> $GITHUB_STEP_SUMMARY
-          echo "Generated on: $(date --utc)" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cargo audit >> $GITHUB_STEP_SUMMARY || true
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-
   cross:
     strategy:
       fail-fast: false
