@@ -10,7 +10,7 @@ env:
   bin-name: todo
   feature-set: ''
   hack-group: ''
-  cache: 'false'
+  cache: false
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -138,7 +138,7 @@ jobs:
           rustup update
           rustc --version
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: Clippy Check
         shell: bash
         run: |
@@ -182,7 +182,7 @@ jobs:
         with:
           pkgs: cargo-hack
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: Hack Check (each-feature)
         shell: bash
         run: |
@@ -232,7 +232,7 @@ jobs:
       - name: Install cargo-msrv
         run: cargo binstall --version 0.16.0-beta.14 --no-confirm cargo-msrv
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: MSRV Check
         shell: bash
         run: |
@@ -263,7 +263,7 @@ jobs:
         with:
           pkgs: cargo-audit
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: Cache Advisory DB
         uses: actions/cache@v3
         with:
@@ -334,7 +334,7 @@ jobs:
         with:
           pkgs: cross,coreutils
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cross test --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
@@ -374,7 +374,7 @@ jobs:
         with:
           pkgs: cargo-auditable,coreutils
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cargo test --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
@@ -414,7 +414,7 @@ jobs:
         with:
           pkgs: cargo-auditable,coreutils
       - uses: Swatinem/rust-cache@v2
-        if: ${{ env.cache }}
+        if: ${{ env.cache == 'true' }}
       - name: Run tests
         if: ${{ matrix.can-test }}
         run: cargo test --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
