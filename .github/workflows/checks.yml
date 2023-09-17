@@ -1,25 +1,24 @@
 name: Rust Checks
-### Name: Rust Checks
-### Author: harmless-tech
-### Version: audit-3.0.0
-### Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
   push:
     branches: [ main ]
+    # paths: [ .github/workflows/checks.yml, keys/**, src/**, test/**, build.rs, Cargo.lock, Cargo.toml, Cross.toml, rustfmt.toml ]
   pull_request:
     branches: [ main ]
+    # paths: [ .github/workflows/checks.yml, keys/**, src/**, test/**, build.rs, Cargo.lock, Cargo.toml, Cross.toml, rustfmt.toml ]
   workflow_dispatch:
 
 env:
+  feature-set: ''
+  hack-group: ''
   CARGO_TERM_COLOR: never
-  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
   fmt-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install nightly
         run: rustup toolchain install nightly --allow-downgrade -c rustfmt
       - name: Rustfmt Check
@@ -39,7 +38,7 @@ jobs:
 
   clippy:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
@@ -50,24 +49,18 @@ jobs:
             os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-          key: ${{ runner.os }}-clippy-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@v4
       - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
+        run: |
+          rustup update
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
       - name: Clippy Check
         shell: bash
         run: |
           set -o pipefail
-          cargo clippy --all-targets --all-features --verbose --workspace --locked -- -D warnings 2>&1 | tee .step-data.txt
+          cargo clippy --all-targets --verbose --workspace --locked -- -D warnings 2>&1 | tee .step-data.txt
+          cargo clippy --all-targets --verbose --workspace --locked ${{ env.feature-set }} -- -D warnings 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
         shell: bash
@@ -83,7 +76,7 @@ jobs:
 
   cargo-hack:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
@@ -94,22 +87,15 @@ jobs:
             os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-          key: ${{ runner.os }}-cargo-hack-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+      - uses: actions/checkout@v4
       - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
+        run: |
+          rustup update
+          rustc --version
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
         with:
-          tools: cargo-hack
+          pkgs: cargo-hack
+      - uses: Swatinem/rust-cache@v2
       - name: Hack Check (each-feature)
         shell: bash
         run: |
@@ -119,46 +105,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          cargo hack check --feature-powerset --no-dev-deps --verbose --workspace --locked 2>&1 | tee .step-data.txt
-      - name: Put into summary (success)
-        if: success()
-        shell: bash
-        run: echo "Success" >> $GITHUB_STEP_SUMMARY
-      - name: Put into summary (failure)
-        if: failure()
-        shell: bash
-        run: |
-          echo "Failed!" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`shell" >> $GITHUB_STEP_SUMMARY
-          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-
-  cargo-msrv:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-          key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-binstall
-      - name: Install cargo-msrv
-        run: cargo binstall --version 0.16.0-beta.11 --no-confirm cargo-msrv
-      - name: MSRV Check
-        shell: bash
-        run: |
-          set -o pipefail
-          cargo msrv --locked 2>&1 | tee .step-data.txt
+          cargo hack check --feature-powerset ${{ env.hack-group }} --no-dev-deps --verbose --workspace --locked 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
         shell: bash

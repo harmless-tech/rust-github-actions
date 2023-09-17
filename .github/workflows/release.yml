@@ -1,8 +1,4 @@
 name: Rust Build, Test, and Release
-### Name: Rust Build, Test, and Release
-### Author: harmless-tech
-### Version: audit-3.0.0
-### Git Repo: https://github.com/harmless-tech/rust-github-actions
 
 on:
   push:
@@ -12,58 +8,81 @@ on:
 
 env:
   bin-name: todo
-  allow-cross-auditable: true
+  feature-set: ''
+  hack-group: ''
   CARGO_TERM_COLOR: always
-  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 jobs:
   release:
     outputs:
       tag: ${{ github.ref_name }}
       name: ${{ github.ref_name }}
-      version: ${{ steps.regex-tag.outputs.group1 }}${{ steps.regex-tag.outputs.group2 }}
-      prerelease: ${{ steps.regex-tag.outputs.group2 != '' }}
+      prerelease: ${{ steps.regex-tag.outputs.match == '' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: KyoriPowered/action-regex-match@v3
         id: regex-tag
         with:
-          text: ${{ github.ref_name }}
-          regex: '^v(\d+\.\d+\.\d+)(-.*)?$'
+          text: ${{ github.ref }}
+          regex: '^refs\/tags\/v\d+\.\d+\.\d+$'
 
   publish-crates-io:
     runs-on: ubuntu-latest
     needs: [ release, check-fmt, clippy, cross, apple-darwin, pc-windows-msvc ]
     steps:
-      - uses: actions/checkout@v3
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
+      - uses: actions/checkout@v4
       - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-#TODO: Publish
-#        - name: Publish
-#          run: |
-#            cargo publish --verbose --locked --token ${CRATES_TOKEN} # -p CRATE
-#          env:
-#            CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
+        run: |
+          rustup update
+          rustc --version
+      - name: Publish
+        run: cargo publish --verbose --locked --token ${CRATES_TOKEN}
+        env:
+          CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
 
   publish-github-releases:
     runs-on: ubuntu-latest
     needs: [ release, check-fmt, clippy, cross, apple-darwin, pc-windows-msvc ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
+      - name: Merge hashes
+        shell: bash
+        run: |
+          echo -n "" > hashes.sha256
+          for D in target-*; do
+            if [ -d "${D}" ]; then
+              echo "${D}"
+              pushd "${D}"
+              cat *.sha256 >> ../hashes.sha256
+              popd
+            fi
+          done
+      # - name: Sign archives
+      #   shell: bash
+      #   run: |
+      #     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+      #     brew install minisign
+      #     echo -n "$SIGNING_KEY" | base64 --decode > ~/.minisign_secret.key
+      #     for D in target-*; do
+      #       if [ -d "${D}" ]; then
+      #         echo "${D}"
+      #         pushd "${D}"
+        
+      #         for file in ./*.tar.gz ./*.zip; do
+      #           if [ -f "$file" ]; then
+      #             minisign -S -s ~/.minisign_secret.key -m $file
+      #             minisign -V -p ../keys/cargo-prebuilt.pub -m $file
+      #           fi 
+      #         done
+                
+      #         popd
+      #       fi
+      #     done
+      #     rm -f ~/.minisign_secret.key
+      #   env:
+      #     SIGNING_KEY: ${{ secrets.MINISIGN_SIGNING_KEY }}
       - name: Create and push artifacts to release
         uses: ncipollo/release-action@v1
         with:
@@ -71,7 +90,7 @@ jobs:
           name: ${{ needs.release.outputs.name }}
           allowUpdates: true
           prerelease: ${{ needs.release.outputs.prerelease }}
-          artifacts: "target-*/*.tar.gz,target-*/*.zip,target-*/*.sha256"
+          artifacts: "target-*/*.minisig,target-*/*.tar.gz,target-*/*.zip,hashes.sha256"
           body: ""
 
   check-fmt:
@@ -79,7 +98,7 @@ jobs:
       CARGO_TERM_COLOR: never
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install nightly
         run: rustup toolchain install nightly --allow-downgrade -c rustfmt
       - name: Rustfmt Check
@@ -99,7 +118,7 @@ jobs:
 
   clippy:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
@@ -111,32 +130,19 @@ jobs:
     env:
       CARGO_TERM_COLOR: never
     runs-on: ${{ matrix.os }}
-    needs: [ setup ]
     steps:
-      - uses: actions/checkout@v3
-      - name: Change file endings in Cargo.lock
-        if: ${{ contains( matrix.os, 'windows' ) }}
-        shell: pwsh
-        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
+      - uses: actions/checkout@v4
       - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
+        run: |
+          rustup update
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
       - name: Clippy Check
         shell: bash
         run: |
           set -o pipefail
-          cargo clippy --all-targets --all-features --verbose --workspace --release --locked -- -D warnings 2>&1 | tee .step-data.txt
+          cargo clippy --all-targets --verbose --workspace --release --locked -- -D warnings 2>&1 | tee .step-data.txt
+          cargo clippy --all-targets --verbose --workspace --release --locked ${{ env.feature-set }} -- -D warnings 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
         shell: bash
@@ -152,7 +158,7 @@ jobs:
 
   cargo-hack:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
@@ -164,30 +170,16 @@ jobs:
     env:
       CARGO_TERM_COLOR: never
     runs-on: ${{ matrix.os }}
-    needs: [ setup ]
     steps:
-      - uses: actions/checkout@v3
-      - name: Change file endings in Cargo.lock
-        if: ${{ contains( matrix.os, 'windows' ) }}
-        shell: pwsh
-        run: (Get-Content -Raw Cargo.lock) -replace "`r`n","`n" | Set-Content Cargo.lock -NoNewline
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
+      - uses: actions/checkout@v4
       - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
+        run: |
+          rustup update
+          rustc --version
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
         with:
-          tools: cargo-hack
+          pkgs: cargo-hack
+      - uses: Swatinem/rust-cache@v2
       - name: Hack Check (each-feature)
         shell: bash
         run: |
@@ -197,7 +189,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          cargo hack check --feature-powerset --no-dev-deps --verbose --workspace --release --locked 2>&1 | tee .step-data.txt
+          cargo hack check --feature-powerset ${{ env.hack-group }} --no-dev-deps --verbose --workspace --release --locked 2>&1 | tee .step-data.txt
       - name: Put into summary (success)
         if: success()
         shell: bash
@@ -211,69 +203,68 @@ jobs:
           cat .step-data.txt >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  setup:
-    runs-on: ubuntu-latest
+  cargo-msrv:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            os: macos-latest
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+    env:
+      CARGO_TERM_COLOR: never
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-      - name: Create Folders
-        if: ${{ !steps.cache.outputs.cache-hit }}
-        run: |
-          mkdir -p ~/.cargo/registry/index
-          mkdir -p ~/.cargo/registry/cache
-          mkdir -p ~/.cargo/git/db
-          mkdir -p ./.cargo-store
+      - uses: actions/checkout@v4
       - name: Update Rust
-        if: ${{ !steps.cache.outputs.cache-hit }}
-        run: rustup update
-      - name: Rust Version
-        if: ${{ !steps.cache.outputs.cache-hit }}
-        run: rustc --version
-      - name: Download Deps
-        if: ${{ !steps.cache.outputs.cache-hit }}
-        run: cargo fetch --verbose --locked
-      - name: Store Deps
-        if: ${{ !steps.cache.outputs.cache-hit }}
         run: |
-          mkdir -p ./.cargo-store/registry
-          mkdir -p ./.cargo-store/git
-          cp -r ~/.cargo/registry/index ./.cargo-store/registry
-          cp -r ~/.cargo/registry/cache ./.cargo-store/registry
-          cp -r ~/.cargo/git/db ./.cargo-store/git
+          rustup update
+          rustc --version
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
+        with:
+          pkgs: cargo-binstall
+      - name: Install cargo-msrv
+        run: cargo binstall --version 0.16.0-beta.14 --no-confirm cargo-msrv
+      - uses: Swatinem/rust-cache@v2
+      - name: MSRV Check
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo msrv verify -- cargo check --verbose --release --locked 2>&1 | tee .step-data.txt
+      - name: Put into summary (success)
+        if: success()
+        shell: bash
+        run: echo "Success" >> $GITHUB_STEP_SUMMARY
+      - name: Put into summary (failure)
+        if: failure()
+        shell: bash
+        run: |
+          echo "Failed!" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`shell" >> $GITHUB_STEP_SUMMARY
+          cat .step-data.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   reports:
     runs-on: ubuntu-latest
-    needs: [ setup ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        id: cache
+      - uses: actions/checkout@v4
+      - name: Update Rust
+        run: |
+          rustup update
+          rustc --version
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
         with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
+          pkgs: cargo-audit
+      - uses: Swatinem/rust-cache@v2
       - name: Cache Advisory DB
         uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/advisory-db
           key: cache-advisory-db
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-audit
       - name: Deps Report
         run: |
           test -f Cargo.lock || cargo generate-lockfile --verbose
@@ -292,7 +283,7 @@ jobs:
 
   cross:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
@@ -319,84 +310,45 @@ jobs:
             can-test: true
           - target: s390x-unknown-linux-gnu
             can-test: true
-          - target: mips64-unknown-linux-gnuabi64
-            can-test: true
-          - target: mips64-unknown-linux-muslabi64
-            can-test: true
-          - target: mips64el-unknown-linux-gnuabi64
-            can-test: true
-          - target: mips64el-unknown-linux-muslabi64
-            can-test: true
-          - target: i686-unknown-linux-gnu
-            can-test: false
-          - target: i686-unknown-linux-musl
-            can-test: false
-          - target: i686-unknown-freebsd
-            can-test: false
           - target: armv7-unknown-linux-gnueabihf
             can-test: true
           - target: armv7-unknown-linux-musleabihf
             can-test: true
-          - target: powerpc-unknown-linux-gnu
-            can-test: true
-          - target: mips-unknown-linux-gnu
-            can-test: true
-          - target: mips-unknown-linux-musl
-            can-test: true
-          - target: mipsel-unknown-linux-gnu
-            can-test: true
-          - target: mipsel-unknown-linux-musl
-            can-test: true
           - target: x86_64-pc-windows-gnu
             can-test: true
             ending: .exe
-          - target: i686-pc-windows-gnu
-            can-test: true
-            ending: .exe
     runs-on: ubuntu-latest
-    needs: [ release, setup, check-fmt, clippy, cargo-hack ]
+    needs: [ check-fmt, clippy, cargo-hack, cargo-msrv ]
     steps:
-      - uses: actions/checkout@v3
-      - name: Get deps from cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
+      - uses: actions/checkout@v4
       - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
+        run: |
+          rustup update
+          rustc --version
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
         with:
-          tools: cross,coreutils
+          pkgs: cross,coreutils
+      - uses: Swatinem/rust-cache@v2
       - name: Run tests
         if: ${{ matrix.can-test }}
-        run: cross test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
-      - name: Cross add auditable support
-        if: ${{ env.allow-cross-auditable }}
-        run: curl -fsSL https://gist.githubusercontent.com/harmless-tech/1e8ba45c4e2762e6c013dd2687e3e5bf/raw/2e085e677fcaea6bcd823e23e9dd908b0b79397b/Cross.toml >> Cross.toml
+        run: cross test --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
       - name: Build
-        run: cross build --verbose --workspace --release --locked --target ${{ matrix.target }}
+        run: cross build --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
       - name: Tar
-        run: tar czvf ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}${{ matrix.ending }}
+        run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}${{ matrix.ending }}
       - name: Hash
-        run: echo "$(coreutils sha256sum ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz)" > ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.sha256
+        run: echo "$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
           name: target-${{ matrix.target }}
           path: |
-            ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz
-            ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.sha256
+            ${{ matrix.target }}.tar.gz
+            ${{ matrix.target }}.sha256
 
   apple-darwin:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-apple-darwin
@@ -404,102 +356,73 @@ jobs:
           - target: aarch64-apple-darwin
             can-test: false
     runs-on: macos-latest
-    needs: [ release, setup, check-fmt, clippy, cargo-hack ]
+    needs: [ check-fmt, clippy, cargo-hack, cargo-msrv ]
     steps:
-      - uses: actions/checkout@v3
-      - name: Get deps from cache
-        uses: actions/cache@v3
+      - uses: actions/checkout@v4
+      - name: Update Rust and add target
+        run: |
+          rustup update
+          rustc --version
+          rustup target add ${{ matrix.target }}
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
         with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.target }}
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-auditable,coreutils
+          pkgs: cargo-auditable,coreutils
+      - uses: Swatinem/rust-cache@v2
       - name: Run tests
         if: ${{ matrix.can-test }}
-        run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
+        run: cargo test --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
       - name: Build
-        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
+        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
       - name: Tar
-        run: tar czvf ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
+        run: tar czvf ${{ matrix.target }}.tar.gz -C ./target/${{ matrix.target }}/release ${{ env.bin-name }}
       - name: Hash
-        run: echo "$(coreutils sha256sum ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz)" > ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.sha256
+        run: echo "$(coreutils sha256sum ${{ matrix.target }}.tar.gz)" > ${{ matrix.target }}.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
           name: target-${{ matrix.target }}
           path: |
-            ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.tar.gz
-            ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.sha256
+            ${{ matrix.target }}.tar.gz
+            ${{ matrix.target }}.sha256
 
   pc-windows-msvc:
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - target: x86_64-pc-windows-msvc
             can-test: true
           - target: aarch64-pc-windows-msvc
             can-test: false
-          - target: i686-pc-windows-msvc
-            can-test: true
     runs-on: windows-latest
-    needs: [ release, setup, check-fmt, clippy, cargo-hack ]
+    needs: [ check-fmt, clippy, cargo-hack, cargo-msrv ]
     steps:
-      - uses: actions/checkout@v3
-      - name: Change file endings in Cargo.lock
-        shell: bash
+      - uses: actions/checkout@v4
+      - name: Update Rust and add target
         run: |
-          ex Cargo.lock <<EOF
-          :set fileformat=unix
-          :wq
-          EOF
-      - name: Get deps from cache
-        uses: actions/cache@v3
+          rustup update
+          rustc --version
+          rustup target add ${{ matrix.target }}
+      - uses: cargo-prebuilt/cargo-prebuilt-action@v3
         with:
-          path: |
-            .cargo-store
-          key: deps-cache-${{ hashFiles('**/Cargo.lock') }}
-          enableCrossOsArchive: true
-          fail-on-cache-miss: true
-      - name: Move deps
-        run: mv ./.cargo-store/* ~/.cargo
-      - name: Update Rust
-        run: rustup update
-      - name: Rust Version
-        run: rustc --version
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.target }}
-      - uses: cargo-prebuilt/cargo-prebuilt-action@v1
-        with:
-          tools: cargo-auditable,coreutils
+          pkgs: cargo-auditable,coreutils
+      - uses: Swatinem/rust-cache@v2
       - name: Run tests
         if: ${{ matrix.can-test }}
-        run: cargo test --verbose --workspace --all-features --release --locked --target ${{ matrix.target }}
+        run: cargo test --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
       - name: Build
-        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }}
+        run: cargo auditable build --verbose --workspace --release --locked --target ${{ matrix.target }} ${{ env.feature-set }}
       - name: Zip
         uses: vimtor/action-zip@v1.1
         with:
           files: ./target/${{ matrix.target }}/release/${{ env.bin-name }}.exe
-          dest: ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.zip
+          dest: ${{ matrix.target }}.zip
       - name: Hash
-        run: echo "$(coreutils sha256sum ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.zip)" > ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.sha256
+        run: echo "$(coreutils sha256sum ${{ matrix.target }}.zip)" > ${{ matrix.target }}.sha256
       - name: Artifact
         uses: actions/upload-artifact@v3
         with:
           name: target-${{ matrix.target }}
           path: |
-            ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.zip
-            ${{ env.bin-name }}-${{ needs.release.outputs.version }}-${{ matrix.target }}.sha256
+            ${{ matrix.target }}.zip
+            ${{ matrix.target }}.sha256
