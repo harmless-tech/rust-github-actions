@@ -10,7 +10,7 @@ env:
   bin-name: todo
   feature-set: ''
   hack-group: ''
-  cache: False
+  cache: 'false'
   CARGO_TERM_COLOR: always
 
 jobs:
