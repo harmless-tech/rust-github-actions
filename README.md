@@ -7,6 +7,7 @@ Some simple GitHub action workflows for checking, testing/building, and releasin
 - Build debug: [build.yml](.github/workflows/build.yml)
 - Checks: [checks.yml](.github/workflows/checks.yml)
 - Build release and create release: [release.yml](.github/workflows/release.yml)
+- Markdown Checks: [markdown-checks.yml](.github/workflows/markdown-checks.yml)
 
 ## Downloads
 
@@ -37,6 +38,16 @@ Some simple GitHub action workflows for checking, testing/building, and releasin
   wget -P .github/workflows https://github.com/harmless-tech/rust-github-actions/raw/main/.github/workflows/release.yml
   ```
 
+- markdown-checks.yml
+  ```shell
+  mkdir -p .github/workflows && curl -fsSL https://github.com/harmless-tech/rust-github-actions/raw/main/.github/workflows/markdown-checks.yml > .github/workflows/markdown-checks.yml
+  ```
+  or
+  ```shell
+  wget -P .github/workflows https://github.com/harmless-tech/rust-github-actions/raw/main/.github/workflows/markdown-checks.yml
+  ```
+
 ### Examples
 
-- [cargo-prebuilt](https://github.com/crow-rest/cargo-prebuilt)
+- [cargo-prebuilt](https://github.com/cargo-prebuilt/cargo-prebuilt)
+- [dvs](https://github.com/harmless-tech/dvs)
