@@ -4,9 +4,9 @@ version = 3
 
 [[package]]
 name = "bpaf"
-version = "0.9.5"
+version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1dc3b1bd654a8d16eea03586c3eee8ffd25c7f242b9eae9730cc442834fe56d9"
+checksum = "565688a36ddfcfc189cc927c94a6b69cc96c9f8a69030151ae8f0ed2b54a2ad3"
 
 [[package]]
 name = "cfg-if"

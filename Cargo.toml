@@ -7,7 +7,7 @@ rust-version = "1.60"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bpaf = "0.9.5"
+bpaf = "0.9.6"
 hex = "0.4.3"
 tracing = "0.1.37"
 
